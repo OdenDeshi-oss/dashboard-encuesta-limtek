@@ -36,6 +36,18 @@ ENCUESTA_PATH = "data/ENCUESTA OPERARIOS_ CIERRE 2026.xlsx"
 INVENTARIO_PATH = "data/11. INVENTARIO NOVIEMBRE 2025 - ACTUALIZADO (1).xlsx"
 
 # ======================
+# DEFINICIÓN DE PREGUNTAS MÚLTIPLES
+# ======================
+# Estas son las columnas de checkbox/opciones múltiples en la encuesta
+PREGUNTAS_MULTIPLES = [
+    "SEGURIDAD Y SALUD EN EL TRABAJO",
+    "USO DE MAQUINARIAS Y EQUIPOS",
+    "USO DE INSUMOS",
+    "ATENCIÓN AL CLIENTE",
+    "OTRO (ESPECIFIQUE)"
+]
+
+# ======================
 # CARGA ENCUESTA CON MANEJO DE ERRORES
 # ======================
 try:
@@ -391,9 +403,222 @@ if len(df_cruce) > 0:
 else:
     st.warning("⚠️ No hay datos para mostrar con los filtros seleccionados")
 
+# ============================================================================
+# NUEVA SECCIÓN: ANÁLISIS DE PREGUNTAS MÚLTIPLES
+# ============================================================================
+separador()
+st.header("📋 Análisis de Necesidades de Capacitación")
+st.write("Áreas en las que el personal operativo indica necesitar capacitación")
+
+# ======================
+# APLICAR FILTROS A LA ENCUESTA COMPLETA
+# ======================
+# Filtramos df_encuesta según los filtros de sidebar para análisis dinámico
+df_encuesta_filtrada = df_encuesta.copy()
+
+if cliente_sel != "Todos":
+    df_encuesta_filtrada = df_encuesta_filtrada[df_encuesta_filtrada[COL_CLIENTE] == cliente_sel]
+
+if unidad_sel != "Todas":
+    df_encuesta_filtrada = df_encuesta_filtrada[df_encuesta_filtrada[COL_UNIDAD] == unidad_sel]
+
+# Total de encuestados después de aplicar filtros
+total_encuestados_filtrados = len(df_encuesta_filtrada)
+
+if total_encuestados_filtrados == 0:
+    st.warning("⚠️ No hay encuestas para analizar con los filtros seleccionados")
+else:
+    st.info(f"📊 Analizando respuestas de **{total_encuestados_filtrados}** encuestados (según filtros aplicados)")
+    
+    # ======================
+    # VERIFICAR EXISTENCIA DE COLUMNAS DE PREGUNTAS MÚLTIPLES
+    # ======================
+    preguntas_encontradas = []
+    preguntas_no_encontradas = []
+    
+    for pregunta in PREGUNTAS_MULTIPLES:
+        if pregunta in df_encuesta_filtrada.columns:
+            preguntas_encontradas.append(pregunta)
+        else:
+            preguntas_no_encontradas.append(pregunta)
+    
+    if preguntas_no_encontradas:
+        st.warning(f"⚠️ Columnas no encontradas en la encuesta: {preguntas_no_encontradas}")
+        with st.expander("🔍 Ver columnas disponibles que contienen palabras clave"):
+            for palabra in ["SEGURIDAD", "MAQUINARIA", "INSUMO", "CLIENTE", "OTRO"]:
+                cols = [c for c in df_encuesta_filtrada.columns if palabra in c]
+                if cols:
+                    st.write(f"**{palabra}:** {cols}")
+    
+    if not preguntas_encontradas:
+        st.error("❌ No se encontraron columnas de preguntas múltiples. Verifica los nombres exactos en el Excel.")
+    else:
+        # ======================
+        # FUNCIÓN PARA DETECTAR SI UNA CELDA ESTÁ MARCADA
+        # ======================
+        def esta_marcada(valor):
+            """
+            Detecta si una celda de pregunta múltiple está marcada.
+            
+            Valores considerados como "marcado":
+            - "SÍ", "SI", "X", "1", 1, True
+            - Cualquier texto que no sea vacío, "NAN", "0", "NO"
+            
+            Valores considerados como "no marcado":
+            - "", "NAN", "0", "NO", None, 0, False
+            """
+            if pd.isna(valor):
+                return False
+            
+            valor_str = str(valor).strip().upper()
+            
+            # Valores que indican "no marcado"
+            if valor_str in ["", "NAN", "0", "NO", "NONE"]:
+                return False
+            
+            # Valores que indican "marcado"
+            if valor_str in ["SÍ", "SI", "X", "1", "TRUE"]:
+                return True
+            
+            # Si tiene cualquier otro texto, considerarlo marcado
+            return len(valor_str) > 0
+        
+        # ======================
+        # PROCESAR CADA PREGUNTA MÚLTIPLE
+        # ======================
+        resultados = []
+        
+        for pregunta in preguntas_encontradas:
+            # Contar cuántos tienen la pregunta marcada
+            marcados = df_encuesta_filtrada[pregunta].apply(esta_marcada).sum()
+            
+            # Calcular porcentaje sobre el total filtrado
+            porcentaje = round((marcados / total_encuestados_filtrados) * 100, 1) if total_encuestados_filtrados > 0 else 0
+            
+            resultados.append({
+                "ÁREA DE CAPACITACIÓN": pregunta,
+                "CANTIDAD": int(marcados),
+                "PORCENTAJE": porcentaje
+            })
+        
+        # Crear DataFrame con resultados
+        df_resultados = pd.DataFrame(resultados).sort_values("CANTIDAD", ascending=False)
+        
+        # ======================
+        # VISUALIZACIÓN: GRÁFICO DE BARRAS
+        # ======================
+        st.subheader("📊 Áreas de Capacitación Solicitadas")
+        
+        df_resultados["LABEL"] = df_resultados.apply(
+            lambda r: f"{r['CANTIDAD']} ({r['PORCENTAJE']}%)",
+            axis=1
+        )
+        
+        fig_capacitacion = px.bar(
+            df_resultados,
+            x="ÁREA DE CAPACITACIÓN",
+            y="CANTIDAD",
+            text="LABEL",
+            title=f"Necesidades de Capacitación - Personal Operativo ({total_encuestados_filtrados} encuestados)",
+            labels={
+                "CANTIDAD": "Cantidad de menciones",
+                "ÁREA DE CAPACITACIÓN": "Área"
+            },
+            color="PORCENTAJE",
+            color_continuous_scale="Blues"
+        )
+        
+        fig_capacitacion.update_traces(textposition="outside")
+        fig_capacitacion.update_layout(
+            uniformtext_minsize=8,
+            uniformtext_mode="hide",
+            xaxis_tickangle=-45,
+            showlegend=False
+        )
+        
+        st.plotly_chart(fig_capacitacion, use_container_width=True)
+        
+        # ======================
+        # TABLA DE DETALLE
+        # ======================
+        st.subheader("📋 Detalle de Necesidades")
+        st.dataframe(
+            df_resultados[["ÁREA DE CAPACITACIÓN", "CANTIDAD", "PORCENTAJE"]],
+            use_container_width=True
+        )
+        
+        # ======================
+        # ANÁLISIS POR CLIENTE (si no hay filtro de cliente específico)
+        # ======================
+        if cliente_sel == "Todos" and len(clientes) > 1:
+            separador()
+            st.subheader("🏢 Necesidades de Capacitación por Cliente")
+            
+            resultados_por_cliente = []
+            
+            for cliente in clientes:
+                df_cliente = df_encuesta[df_encuesta[COL_CLIENTE] == cliente]
+                total_cliente = len(df_cliente)
+                
+                if total_cliente > 0:
+                    for pregunta in preguntas_encontradas:
+                        marcados = df_cliente[pregunta].apply(esta_marcada).sum()
+                        porcentaje = round((marcados / total_cliente) * 100, 1)
+                        
+                        resultados_por_cliente.append({
+                            "CLIENTE": cliente,
+                            "ÁREA": pregunta,
+                            "CANTIDAD": int(marcados),
+                            "TOTAL_ENCUESTADOS": total_cliente,
+                            "PORCENTAJE": porcentaje
+                        })
+            
+            df_por_cliente = pd.DataFrame(resultados_por_cliente)
+            
+            # Mostrar solo las 3 áreas más solicitadas por cada cliente
+            st.write("**Top 3 necesidades por cliente:**")
+            
+            for cliente in clientes:
+                df_top3 = df_por_cliente[df_por_cliente["CLIENTE"] == cliente].nlargest(3, "CANTIDAD")
+                
+                if not df_top3.empty:
+                    st.write(f"**{cliente}** ({df_top3['TOTAL_ENCUESTADOS'].iloc[0]} encuestados):")
+                    
+                    for idx, row in df_top3.iterrows():
+                        st.write(f"  • {row['ÁREA']}: {row['CANTIDAD']} ({row['PORCENTAJE']}%)")
+                    
+                    st.write("")
+        
+        # ======================
+        # ANÁLISIS POR UNIDAD (si no hay filtro de unidad específico)
+        # ======================
+        if unidad_sel == "Todas" and len(unidades) > 1:
+            separador()
+            st.subheader("📍 Necesidades de Capacitación por Unidad")
+            
+            # Crear tabla pivote: Unidades en filas, Áreas en columnas
+            resultados_por_unidad = []
+            
+            for unidad in unidades:
+                df_unidad = df_encuesta[df_encuesta[COL_UNIDAD] == unidad]
+                total_unidad = len(df_unidad)
+                
+                if total_unidad > 0:
+                    fila = {"UNIDAD": unidad, "TOTAL_ENCUESTADOS": total_unidad}
+                    
+                    for pregunta in preguntas_encontradas:
+                        marcados = df_unidad[pregunta].apply(esta_marcada).sum()
+                        porcentaje = round((marcados / total_unidad) * 100, 1)
+                        fila[pregunta] = f"{marcados} ({porcentaje}%)"
+                    
+                    resultados_por_unidad.append(fila)
+            
+            df_por_unidad = pd.DataFrame(resultados_por_unidad)
+            
+            st.dataframe(df_por_unidad, use_container_width=True)
+
 # ======================
 # FOOTER
 # ======================
-# Separador compatible
 separador()
 st.caption("📊 Dashboard Encuesta Limtek - Personal Operativo | Desarrollado con Streamlit")
