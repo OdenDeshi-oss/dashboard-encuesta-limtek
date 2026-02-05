@@ -63,3 +63,39 @@ df_inv_resumen = (
 
 st.subheader("Resumen Inventario (Operativos por Cliente y Unidad)")
 st.dataframe(df_inv_resumen)
+
+st.divider()
+st.header("Cruce Encuesta vs Inventario")
+
+# ======================
+# PREPARAR ENCUESTA
+# ======================
+# Ajusta los nombres si el Excel usa otros textos
+COL_CLIENTE = "¿En qué cliente estás destacado?"
+COL_UNIDAD = "¿En qué unidad estás destacado?"
+
+df_encuesta_resumen = (
+    df_encuesta
+    .groupby([COL_CLIENTE, COL_UNIDAD])
+    .size()
+    .reset_index(name="TOTAL_ENCUESTADOS")
+)
+
+st.subheader("Resumen Encuesta (Encuestados por Cliente y Unidad)")
+st.dataframe(df_encuesta_resumen)
+
+# ======================
+# CRUCE CON INVENTARIO
+# ======================
+df_cruce = pd.merge(
+    df_inv_resumen,
+    df_encuesta_resumen,
+    on=[COL_CLIENTE, COL_UNIDAD],
+    how="left"
+)
+
+df_cruce["TOTAL_ENCUESTADOS"] = df_cruce["TOTAL_ENCUESTADOS"].fillna(0).astype(int)
+df_cruce["BRECHA"] = df_cruce["TOTAL_OPERARIOS"] - df_cruce["TOTAL_ENCUESTADOS"]
+
+st.subheader("Cruce Final (Inventario vs Encuesta)")
+st.dataframe(df_cruce)
