@@ -131,3 +131,29 @@ df_cruce["BRECHA"] = df_cruce["TOTAL_OPERARIOS"] - df_cruce["TOTAL_ENCUESTADOS"]
 
 st.subheader("Resultado filtrado (Cobertura Operativa)")
 st.dataframe(df_cruce)
+
+st.divider()
+st.header("Indicadores clave de cobertura")
+
+# ======================
+# KPIs
+# ======================
+total_operarios = int(df_cruce["TOTAL_OPERARIOS"].sum())
+total_encuestados = int(df_cruce["TOTAL_ENCUESTADOS"].sum())
+brecha = int(df_cruce["BRECHA"].sum())
+
+if total_operarios > 0:
+    participacion = round((total_encuestados / total_operarios) * 100, 1)
+else:
+    participacion = 0.0
+
+# ======================
+# MOSTRAR KPIs
+# ======================
+col1, col2, col3, col4 = st.columns(4)
+
+col1.metric("👷 Operarios", total_operarios)
+col2.metric("📝 Encuestados", total_encuestados)
+col3.metric("📉 Brecha", brecha)
+col4.metric("📊 Participación", f"{participacion}%")
+
