@@ -3,4 +3,5 @@ numpy
 plotly
 streamlit
 openpyxl
-altair
+altair==4.2.2
+
