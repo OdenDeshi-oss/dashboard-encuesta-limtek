@@ -15,7 +15,7 @@ st.write("Preparación de datos (sin gráficos)")
 # ======================
 # RUTAS DE ARCHIVOS
 # ======================
-ENCUESTA_PATH = "data/ENCUESTA_OPERARIOS_CIERRE 2026.xlsx"
+EENCUESTA_PATH = "data/ENCUESTA OPERARIOS_ CIERRE 2026.xlsx"
 INVENTARIO_PATH = "data/11. INVENTARIO NOVIEMBRE 2025 - ACTUALIZADO (1).xlsx"
 
 # ======================
