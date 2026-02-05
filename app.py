@@ -195,7 +195,7 @@ fig = px.bar(
     df_grafico,
     x="UNIDAD",
     y="TOTAL_ENCUESTADOS",
-    text="LABEL",
+    text_auto=True,
     title="Encuestados por Unidad (Cantidad y % del total)",
     labels={
         "TOTAL_ENCUESTADOS": "Cantidad de encuestados",
@@ -203,13 +203,19 @@ fig = px.bar(
     }
 )
 
-fig.update_traces(textposition="outside")
-fig.update_layout(uniformtext_minsize=8, uniformtext_mode="hide")
+
 
 st.plotly_chart(fig, use_container_width=True)
 
 st.divider()
 st.header("Cobertura por Cliente")
+
+st.subheader("Detalle por Unidad (Cantidad y %)")
+st.dataframe(
+    df_grafico[["UNIDAD", "TOTAL_ENCUESTADOS", "PORCENTAJE"]],
+    use_container_width=True
+)
+
 
 # ======================
 # PREPARAR DATA PARA GRAFICO
