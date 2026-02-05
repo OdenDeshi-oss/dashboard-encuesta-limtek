@@ -15,18 +15,22 @@ st.title("Dashboard Encuesta – Personal Operativo")
 st.write("Preparación y análisis de datos")
 
 # ======================
-# RUTAS DE ARCHIVOS
-# ======================
-ENCUESTA_PATH = "data/ENCUESTA OPERARIOS_ CIERRE 2026.xlsx"
-INVENTARIO_PATH = "data/11. INVENTARIO NOVIEMBRE 2025 - ACTUALIZADO (1).xlsx"
-
-# ======================
 # FUNCIÓN PARA NORMALIZAR NOMBRES DE COLUMNAS
 # ======================
 def normalizar_columnas(df):
     """Normaliza nombres de columnas: sin espacios extra, uppercase"""
     df.columns = df.columns.str.strip().str.upper()
     return df
+
+def separador():
+    """Separador visual compatible con versiones antiguas de Streamlit"""
+    st.markdown("---")
+
+# ======================
+# RUTAS DE ARCHIVOS
+# ======================
+ENCUESTA_PATH = "data/ENCUESTA OPERARIOS_ CIERRE 2026.xlsx"
+INVENTARIO_PATH = "data/11. INVENTARIO NOVIEMBRE 2025 - ACTUALIZADO (1).xlsx"
 
 # ======================
 # CARGA ENCUESTA CON MANEJO DE ERRORES
@@ -48,7 +52,7 @@ except Exception as e:
     st.error(f"❌ Error al cargar la encuesta: {str(e)}")
     st.stop()
 
-st.divider()
+separador()
 
 # ======================
 # CARGA INVENTARIO CON MANEJO DE ERRORES
@@ -70,7 +74,7 @@ except Exception as e:
     st.error(f"❌ Error al cargar el inventario: {str(e)}")
     st.stop()
 
-st.divider()
+separador()
 
 # ======================
 # VERIFICAR COLUMNAS NECESARIAS
@@ -117,7 +121,7 @@ df_inv_resumen = (
 st.subheader("📈 Resumen Inventario (Operativos por Cliente y Unidad)")
 st.dataframe(df_inv_resumen, use_container_width=True)
 
-st.divider()
+separador()
 
 # ======================
 # PREPARAR ENCUESTA
@@ -151,7 +155,7 @@ df_encuesta_resumen = (
 st.subheader("📝 Resumen Encuesta (Encuestados por Cliente y Unidad)")
 st.dataframe(df_encuesta_resumen, use_container_width=True)
 
-st.divider()
+separador()
 st.header("🔄 Cruce Encuesta vs Inventario")
 
 # ======================
@@ -200,21 +204,25 @@ df_cruce["COBERTURA_%"] = (
 
 st.subheader("📊 Resultado filtrado (Cobertura Operativa)")
 
-# Resaltar brechas altas
-def resaltar_brechas(row):
-    if row["BRECHA"] > 10:
-        return ["background-color: #ffcccc"] * len(row)
-    elif row["BRECHA"] > 5:
-        return ["background-color: #fff3cd"] * len(row)
-    else:
-        return [""] * len(row)
+# Mostrar tabla con formato condicional
+def color_brecha(val):
+    """Colorea las celdas según el valor de la brecha"""
+    if val > 10:
+        return 'background-color: #ffcccc'
+    elif val > 5:
+        return 'background-color: #fff3cd'
+    return ''
 
-st.dataframe(
-    df_cruce.style.apply(resaltar_brechas, axis=1),
-    use_container_width=True
-)
+# Aplicar estilo si la versión de pandas lo soporta
+try:
+    st.dataframe(
+        df_cruce.style.applymap(color_brecha, subset=['BRECHA']),
+        use_container_width=True
+    )
+except:
+    st.dataframe(df_cruce, use_container_width=True)
 
-st.divider()
+separador()
 st.header("📊 Indicadores clave de cobertura")
 
 # ======================
@@ -231,10 +239,10 @@ participacion = round(
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("👷 Operarios", f"{total_operarios:,}")
 col2.metric("📝 Encuestados", f"{total_encuestados:,}")
-col3.metric("📉 Brecha", f"{brecha:,}", delta=None if brecha == 0 else f"-{brecha}")
-col4.metric("📊 Participación", f"{participacion}%", delta=f"{participacion-100:.1f}%")
+col3.metric("📉 Brecha", f"{brecha:,}")
+col4.metric("📊 Participación", f"{participacion}%")
 
-st.divider()
+separador()
 st.header("📍 Cobertura por Unidad")
 
 # ======================
@@ -301,7 +309,7 @@ if len(df_cruce) > 0:
 else:
     st.warning("⚠️ No hay datos para mostrar con los filtros seleccionados")
 
-st.divider()
+separador()
 st.header("🏢 Cobertura por Cliente")
 
 # ======================
@@ -371,5 +379,5 @@ else:
 # ======================
 # FOOTER
 # ======================
-st.divider()
+separador()
 st.caption("📊 Dashboard Encuesta Limtek - Personal Operativo | Desarrollado con Streamlit")
