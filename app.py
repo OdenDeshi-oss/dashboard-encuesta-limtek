@@ -208,4 +208,54 @@ fig.update_layout(uniformtext_minsize=8, uniformtext_mode="hide")
 
 st.plotly_chart(fig, use_container_width=True)
 
+st.divider()
+st.header("Cobertura por Cliente")
+
+# ======================
+# PREPARAR DATA PARA GRAFICO
+# ======================
+df_grafico_cliente = (
+    df_cruce
+    .groupby("CLIENTE", as_index=False)
+    .agg({
+        "TOTAL_ENCUESTADOS": "sum",
+        "TOTAL_OPERARIOS": "sum"
+    })
+)
+
+# Total dinámico según filtros
+total_encuestados_filtro_cliente = df_grafico_cliente["TOTAL_ENCUESTADOS"].sum()
+
+# Calcular porcentaje dinámico
+df_grafico_cliente["PORCENTAJE"] = df_grafico_cliente["TOTAL_ENCUESTADOS"].apply(
+    lambda x: round((x / total_encuestados_filtro_cliente) * 100, 1) if total_encuestados_filtro_cliente > 0 else 0
+)
+
+# Etiqueta combinada: Cantidad (Porcentaje)
+df_grafico_cliente["LABEL"] = df_grafico_cliente.apply(
+    lambda r: f"{int(r['TOTAL_ENCUESTADOS'])} ({r['PORCENTAJE']}%)",
+    axis=1
+)
+
+# ======================
+# GRAFICO
+# ======================
+fig_cliente = px.bar(
+    df_grafico_cliente,
+    x="CLIENTE",
+    y="TOTAL_ENCUESTADOS",
+    text="LABEL",
+    title="Encuestados por Cliente (Cantidad y % del total)",
+    labels={
+        "TOTAL_ENCUESTADOS": "Cantidad de encuestados",
+        "CLIENTE": "Cliente"
+    }
+)
+
+fig_cliente.update_traces(textposition="outside")
+fig_cliente.update_layout(uniformtext_minsize=8, uniformtext_mode="hide")
+
+st.plotly_chart(fig_cliente, use_container_width=True)
+
+
 
