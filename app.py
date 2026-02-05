@@ -68,6 +68,36 @@ st.divider()
 st.header("Cruce Encuesta vs Inventario")
 
 # ======================
+# FILTROS SIDEBAR
+# ======================
+st.sidebar.header("Filtros")
+
+# Obtener valores únicos
+clientes = sorted(df_inv_resumen["CLIENTE"].dropna().unique())
+cliente_sel = st.sidebar.selectbox(
+    "Cliente",
+    options=["Todos"] + clientes
+)
+
+# Filtrar por cliente
+if cliente_sel != "Todos":
+    df_inv_f = df_inv_resumen[df_inv_resumen["CLIENTE"] == cliente_sel]
+else:
+    df_inv_f = df_inv_resumen.copy()
+
+# Unidades según cliente
+unidades = sorted(df_inv_f["UNIDAD"].dropna().unique())
+unidad_sel = st.sidebar.selectbox(
+    "Unidad",
+    options=["Todas"] + unidades
+)
+
+# Filtro final inventario
+if unidad_sel != "Todas":
+    df_inv_f = df_inv_f[df_inv_f["UNIDAD"] == unidad_sel]
+
+
+# ======================
 # PREPARAR ENCUESTA
 # ======================
 # Ajusta los nombres si el Excel usa otros textos
@@ -88,14 +118,16 @@ st.dataframe(df_encuesta_resumen)
 # CRUCE CON INVENTARIO
 # ======================
 df_cruce = pd.merge(
-    df_inv_resumen,
+    df_inv_f,
     df_encuesta_resumen,
-    on=[COL_CLIENTE, COL_UNIDAD],
+    left_on=["CLIENTE", "UNIDAD"],
+    right_on=[COL_CLIENTE, COL_UNIDAD],
     how="left"
 )
+
 
 df_cruce["TOTAL_ENCUESTADOS"] = df_cruce["TOTAL_ENCUESTADOS"].fillna(0).astype(int)
 df_cruce["BRECHA"] = df_cruce["TOTAL_OPERARIOS"] - df_cruce["TOTAL_ENCUESTADOS"]
 
-st.subheader("Cruce Final (Inventario vs Encuesta)")
+st.subheader("Resultado filtrado (Cobertura Operativa)")
 st.dataframe(df_cruce)
