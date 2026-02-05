@@ -3,9 +3,6 @@ import streamlit as st
 import plotly.express as px
 import os
 
-st.write("Archivos en data/:", os.listdir("data"))
-
-
 
 st.set_page_config(
     page_title="Dashboard Encuesta Limtek",
