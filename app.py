@@ -15,16 +15,19 @@ st.title("Dashboard Encuesta – Personal Operativo")
 st.write("Preparación y análisis de datos")
 
 # ======================
+# FUNCIÓN SEPARADOR (Reemplaza st.divider)
+# ======================
+def separador():
+    """Separador visual - Compatible con todas las versiones de Streamlit"""
+    st.markdown("---")
+
+# ======================
 # FUNCIÓN PARA NORMALIZAR NOMBRES DE COLUMNAS
 # ======================
 def normalizar_columnas(df):
     """Normaliza nombres de columnas: sin espacios extra, uppercase"""
     df.columns = df.columns.str.strip().str.upper()
     return df
-
-def separador():
-    """Separador visual compatible con versiones antiguas de Streamlit"""
-    st.markdown("---")
 
 # ======================
 # RUTAS DE ARCHIVOS
@@ -40,7 +43,13 @@ try:
         st.error(f"❌ No se encontró el archivo: {ENCUESTA_PATH}")
         st.stop()
     
-    df_encuesta = pd.read_excel(ENCUESTA_PATH)
+    # Cargar con engine específico y manejo de encoding
+    df_encuesta = pd.read_excel(ENCUESTA_PATH, engine='openpyxl')
+    
+    # Convertir todas las columnas object a string para evitar errores de encoding
+    for col in df_encuesta.select_dtypes(include=['object']).columns:
+        df_encuesta[col] = df_encuesta[col].astype(str)
+    
     df_encuesta = normalizar_columnas(df_encuesta)
     st.success("✅ Encuesta cargada correctamente")
     
@@ -52,6 +61,7 @@ except Exception as e:
     st.error(f"❌ Error al cargar la encuesta: {str(e)}")
     st.stop()
 
+# Separador compatible
 separador()
 
 # ======================
@@ -62,7 +72,13 @@ try:
         st.error(f"❌ No se encontró el archivo: {INVENTARIO_PATH}")
         st.stop()
     
-    df_inv = pd.read_excel(INVENTARIO_PATH)
+    # Cargar con engine específico y manejo de encoding
+    df_inv = pd.read_excel(INVENTARIO_PATH, engine='openpyxl')
+    
+    # Convertir todas las columnas object a string para evitar errores de encoding
+    for col in df_inv.select_dtypes(include=['object']).columns:
+        df_inv[col] = df_inv[col].astype(str)
+    
     df_inv = normalizar_columnas(df_inv)
     st.success("✅ Inventario cargado correctamente")
     
@@ -74,6 +90,7 @@ except Exception as e:
     st.error(f"❌ Error al cargar el inventario: {str(e)}")
     st.stop()
 
+# Separador compatible
 separador()
 
 # ======================
@@ -96,8 +113,10 @@ CARGO_OPERATIVO = [
     "OPERARIO PART TIME"
 ]
 
-# Filtrar con manejo de valores nulos
-df_inv_operativo = df_inv[df_inv["CARGO"].fillna("").isin(CARGO_OPERATIVO)].copy()
+# Filtrar con manejo de valores nulos y nan
+df_inv_operativo = df_inv[
+    df_inv["CARGO"].fillna("").replace("NAN", "").str.strip().isin(CARGO_OPERATIVO)
+].copy()
 
 st.subheader("📊 Inventario filtrado – Solo personal operativo")
 st.info(f"✅ Registros operativos encontrados: **{len(df_inv_operativo)}** de {len(df_inv)} totales")
@@ -121,6 +140,7 @@ df_inv_resumen = (
 st.subheader("📈 Resumen Inventario (Operativos por Cliente y Unidad)")
 st.dataframe(df_inv_resumen, use_container_width=True)
 
+# Separador compatible
 separador()
 
 # ======================
@@ -155,6 +175,7 @@ df_encuesta_resumen = (
 st.subheader("📝 Resumen Encuesta (Encuestados por Cliente y Unidad)")
 st.dataframe(df_encuesta_resumen, use_container_width=True)
 
+# Separador compatible
 separador()
 st.header("🔄 Cruce Encuesta vs Inventario")
 
@@ -204,24 +225,10 @@ df_cruce["COBERTURA_%"] = (
 
 st.subheader("📊 Resultado filtrado (Cobertura Operativa)")
 
-# Mostrar tabla con formato condicional
-def color_brecha(val):
-    """Colorea las celdas según el valor de la brecha"""
-    if val > 10:
-        return 'background-color: #ffcccc'
-    elif val > 5:
-        return 'background-color: #fff3cd'
-    return ''
+# Mostrar DataFrame simple sin estilos (evita errores de encoding)
+st.dataframe(df_cruce, use_container_width=True)
 
-# Aplicar estilo si la versión de pandas lo soporta
-try:
-    st.dataframe(
-        df_cruce.style.applymap(color_brecha, subset=['BRECHA']),
-        use_container_width=True
-    )
-except:
-    st.dataframe(df_cruce, use_container_width=True)
-
+# Separador compatible
 separador()
 st.header("📊 Indicadores clave de cobertura")
 
@@ -242,6 +249,7 @@ col2.metric("📝 Encuestados", f"{total_encuestados:,}")
 col3.metric("📉 Brecha", f"{brecha:,}")
 col4.metric("📊 Participación", f"{participacion}%")
 
+# Separador compatible
 separador()
 st.header("📍 Cobertura por Unidad")
 
@@ -278,6 +286,9 @@ if len(df_cruce) > 0:
         axis=1
     )
     
+    # Convertir a string para evitar errores de encoding
+    df_grafico["UNIDAD"] = df_grafico["UNIDAD"].astype(str)
+    
     fig = px.bar(
         df_grafico,
         x="UNIDAD",
@@ -309,6 +320,7 @@ if len(df_cruce) > 0:
 else:
     st.warning("⚠️ No hay datos para mostrar con los filtros seleccionados")
 
+# Separador compatible
 separador()
 st.header("🏢 Cobertura por Cliente")
 
@@ -345,6 +357,9 @@ if len(df_cruce) > 0:
         axis=1
     )
     
+    # Convertir a string para evitar errores de encoding
+    df_grafico_cliente["CLIENTE"] = df_grafico_cliente["CLIENTE"].astype(str)
+    
     fig_cliente = px.bar(
         df_grafico_cliente,
         x="CLIENTE",
@@ -379,5 +394,6 @@ else:
 # ======================
 # FOOTER
 # ======================
+# Separador compatible
 separador()
 st.caption("📊 Dashboard Encuesta Limtek - Personal Operativo | Desarrollado con Streamlit")
