@@ -2,79 +2,94 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 from core.constants import ESCALA
-from components.utils import separador
+
 
 def render_pregunta(df, titulo, col_valor):
+
     if col_valor not in df.columns:
         st.warning(f"⚠️ No se encontró la columna {col_valor}")
         return
 
     serie = pd.to_numeric(df[col_valor], errors="coerce").dropna()
-    total = len(serie)
-
-    if total == 0:
+    if serie.empty:
         st.warning("⚠️ Sin respuestas válidas")
         return
 
     conteo = serie.value_counts().reindex([1, 2, 3, 4], fill_value=0)
-    porcentaje = round((conteo / total) * 100, 2)
-
+    total = int(conteo.sum())
     promedio = round(serie.mean(), 2)
     nivel = round((promedio / 4) * 100, 2)
+    porcentaje = (conteo / total * 100).round(2)
 
     df_plot = pd.DataFrame({
-        "Nivel": conteo.index,
         "Etiqueta": [ESCALA[i] for i in conteo.index],
         "Cantidad": conteo.values,
-        "Porcentaje": porcentaje.values
+        "Porcentaje": porcentaje.values,
     })
-
     df_plot["LABEL"] = df_plot.apply(
-        lambda r: f"{r['Cantidad']} ({r['Porcentaje']}%)", axis=1
+        lambda r: f"{int(r['Cantidad'])} ({r['Porcentaje']:.1f}%)", axis=1
     )
 
-    st.markdown(
-        f"""
-        <div style="background-color:#3b78c2;padding:12px;border-radius:6px;color:white;">
-            <b>Detalle</b><br>{titulo}
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    with st.container():
 
-    col_kpi, col_chart = st.columns([1, 3])
-
-    with col_kpi:
         st.markdown(
             f"""
-            <div style="background-color:#f5f7fa;padding:20px;border-radius:6px;text-align:center;">
-                <h1 style="color:#3b78c2">{promedio}</h1>
-                <div style="color:#3b78c2">Nivel alcanzado</div>
-                <h3 style="color:#3b78c2">{nivel}%</h3>
+            <div class="card-header">
+                <b>Detalle</b><br>{titulo}
             </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
-    with col_chart:
-        fig = px.bar(
-            df_plot,
-            x="Etiqueta",
-            y="Cantidad",
-            text="LABEL",
-            category_orders={"Etiqueta": list(ESCALA.values())},
-            labels={"Cantidad": ""},
-        )
-        fig.update_traces(marker_color="#1f497d", textposition="outside")
-        fig.update_layout(
-            showlegend=False,
-            xaxis_title="",
-            yaxis_title="",
-            height=300,
-            margin=dict(l=20, r=20, t=20, b=20),
-            uniformtext_minsize=10,
-            uniformtext_mode="hide"
-        )
-        st.plotly_chart(fig, use_container_width=True)
+        col_kpi, col_chart = st.columns([1, 3], gap="medium")
 
-    separador()
+        with col_kpi:
+            st.markdown(
+                f"""
+                <div class="likert-kpi">
+                    <div class="likert-kpi-value">{promedio}</div>
+                    <div class="likert-kpi-label">Nivel alcanzado</div>
+                    <div class="likert-kpi-sub">{nivel}%</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        with col_chart:
+            fig = px.bar(
+                df_plot,
+                x="Etiqueta",
+                y="Cantidad",
+                text=df_plot["LABEL"],
+                category_orders={"Etiqueta": list(ESCALA.values())},
+            )
+
+            fig.update_traces(
+                width=0.5,
+                textposition="outside",
+                cliponaxis=False,
+                textfont=dict(size=14, weight="bold", color="#0b1b6f"),
+                marker_color="#3b78c2",
+            )
+
+            fig.update_layout(
+                height=300,
+                showlegend=False,
+                margin=dict(l=10, r=10, t=30, b=10),
+                plot_bgcolor="rgba(0,0,0,0)",
+                paper_bgcolor="rgba(0,0,0,0)",
+                yaxis=dict(showgrid=False, showticklabels=False, title=""),
+                xaxis=dict(
+                    title="",
+                    tickfont=dict(size=13, color="#333333", weight="bold"),
+                    automargin=True,
+                ),
+                hovermode=False,
+                bargap=0.3,
+            )
+
+            st.plotly_chart(
+                fig,
+                use_container_width=True,
+                config={"displayModeBar": False, "staticPlot": True},
+            )
