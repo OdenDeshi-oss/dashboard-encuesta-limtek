@@ -283,3 +283,15 @@ section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {
 hr {
     border-color: rgba(59, 120, 194, 0.2) !important;
 }
+/* =========================
+   FIX STREAMLIT CLOUD
+========================= */
+[data-testid="stAppViewContainer"] {
+    background: #0f1b2d !important;
+}
+
+.block-container {
+    padding-top: 1rem !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+}
