@@ -1,6 +1,5 @@
 pandas
 numpy
 plotly
-streamlit
+streamlit==1.40.0
 openpyxl
-pyarrow<15
