@@ -127,21 +127,24 @@ def render_pregunta_abierta(df, titulo, col_valor, top_n=10):
             )
 
         # ── Tabla con scroll ──
+        filas_html = ""
+        for i, texto in enumerate(serie.values[:200], 1):
+            filas_html += f"<tr><td style='padding:6px 10px;color:#888;width:40px;'>{i}</td><td style='padding:6px 10px;color:#333;'>{texto}</td></tr>"
+
         st.markdown(
             f"""
             <div class="scroll-table-header">
                 📋 Todas las respuestas ({total})
             </div>
+            <div style="max-height:300px;overflow-y:auto;background:#fff;border-radius:8px;border:1px solid #e8ecf1;">
+                <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                    <thead><tr style="background:#f0f4fa;position:sticky;top:0;">
+                        <th style="padding:8px 10px;text-align:left;color:#0b1b6f;">#</th>
+                        <th style="padding:8px 10px;text-align:left;color:#0b1b6f;">Respuesta</th>
+                    </tr></thead>
+                    <tbody>{filas_html}</tbody>
+                </table>
+            </div>
             """,
             unsafe_allow_html=True,
-        )
-
-        df_tabla = pd.DataFrame({"Respuesta": serie.values})
-        df_tabla.index = range(1, len(df_tabla) + 1)
-        df_tabla.index.name = "#"
-
-        st.dataframe(
-            df_tabla.astype(str),
-            width=None,
-            height=300,
         )
