@@ -10,6 +10,20 @@
 }
 
 /* =========================
+   FIX STREAMLIT CLOUD
+========================= */
+[data-testid="stAppViewContainer"] {
+    background: #0f1b2d !important;
+}
+
+.block-container {
+    padding-top: 1rem !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+    max-width: 1200px !important;
+}
+
+/* =========================
    FIX STREAMLIT BASE
 ========================= */
 div.element-container {
@@ -24,10 +38,6 @@ div[data-testid="stMarkdownContainer"] {
 
 div[data-testid="column"] > div {
     padding-top: 0 !important;
-}
-
-div[data-testid="stVerticalBlock"] > div {
-    gap: 0 !important;
 }
 
 /* =========================
@@ -117,8 +127,9 @@ div[data-testid="stVerticalBlock"] > div {
 
 /* =========================
    LIKERT – TARJETA POR PREGUNTA
+   Solo aplica a containers directos con card-header
 ========================= */
-div[data-testid="stVerticalBlock"]:has(.card-header) {
+div[data-testid="stVerticalBlock"]:has(> div > div > div > .card-header) {
     background: var(--bg-card);
     border-radius: 16px;
     padding: 20px 24px;
@@ -199,6 +210,7 @@ div[data-testid="stPlotlyChart"] {
     padding: 0 !important;
     margin: 0 !important;
 }
+
 /* =========================
    TABLA SCROLL – RESPUESTAS ABIERTAS
 ========================= */
@@ -212,11 +224,12 @@ div[data-testid="stPlotlyChart"] {
     margin-top: 12px;
     margin-bottom: 8px;
 }
+
 /* =========================
    TÍTULOS DE SECCIÓN
 ========================= */
 h2 {
-    color: #0b1b6f !important;
+    color: #ffffff !important;
     font-size: 22px !important;
     font-weight: 700 !important;
     padding: 12px 0 8px 0 !important;
@@ -235,7 +248,6 @@ section[data-testid="stSidebar"] * {
     color: #ffffff !important;
 }
 
-/* Radio buttons en sidebar */
 section[data-testid="stSidebar"] [role="radiogroup"] label {
     background: rgba(255, 255, 255, 0.08) !important;
     border: 1px solid rgba(255, 255, 255, 0.15) !important;
@@ -255,7 +267,6 @@ section[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) {
     border-color: #f5c542 !important;
 }
 
-/* Selectboxes en sidebar */
 section[data-testid="stSidebar"] .stSelectbox > div > div {
     background: rgba(255, 255, 255, 0.1) !important;
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -268,11 +279,11 @@ section[data-testid="stSidebar"] .stSelectbox label {
     font-size: 13px !important;
 }
 
-/* Título del radio group */
 section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {
     font-size: 14px !important;
     font-weight: 600 !important;
 }
+
 /* =========================
    FOOTER VISIBLE
 ========================= */
@@ -282,16 +293,4 @@ section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {
 
 hr {
     border-color: rgba(59, 120, 194, 0.2) !important;
-}
-/* =========================
-   FIX STREAMLIT CLOUD
-========================= */
-[data-testid="stAppViewContainer"] {
-    background: #0f1b2d !important;
-}
-
-.block-container {
-    padding-top: 1rem !important;
-    padding-left: 2rem !important;
-    padding-right: 2rem !important;
 }
