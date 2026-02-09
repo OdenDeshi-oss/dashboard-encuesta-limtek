@@ -128,15 +128,34 @@ div[data-testid="column"] > div {
 
 /* =========================
    LIKERT – TARJETA POR PREGUNTA
-   Solo aplica a containers directos con card-header
 ========================= */
-div[data-testid="stVerticalBlock"]:has(> div > div > div > .card-header) {
+div[data-testid="stVerticalBlock"]:has(.card-header) {
     background: var(--bg-card);
     border-radius: 16px;
     padding: 24px 28px 16px 28px;
     box-shadow: var(--shadow-card);
     margin: 12px 0 24px 0;
     border: 1px solid #e8ecf1;
+}
+
+/* Excluir KPIs superiores */
+div[data-testid="stVerticalBlock"]:has(.kpi-card) {
+    background: transparent !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    border: none !important;
+}
+
+/* Excluir contenedor principal (header app) */
+div[data-testid="stVerticalBlock"]:has(.limtek-header) {
+    background: transparent !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    border: none !important;
 }
 
 /* Header azul */
