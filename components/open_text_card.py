@@ -141,7 +141,7 @@ def render_pregunta_abierta(df, titulo, col_valor, top_n=10):
         df_tabla.index.name = "#"
 
         st.dataframe(
-            df_tabla,
-            use_container_width=True,
+            df_tabla.astype(str),
+            width=None,
             height=300,
         )
