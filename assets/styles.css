@@ -10,21 +10,6 @@
 }
 
 /* =========================
-   FIX STREAMLIT CLOUD
-========================= */
-[data-testid="stAppViewContainer"] {
-    background: #0f1b2d !important;
-}
-
-.block-container {
-    padding-top: 1rem !important;
-    padding-left: 3rem !important;
-    padding-right: 3rem !important;
-    max-width: 1300px !important;
-    margin: 0 auto !important;
-}
-
-/* =========================
    FIX STREAMLIT BASE
 ========================= */
 div.element-container {
@@ -39,6 +24,10 @@ div[data-testid="stMarkdownContainer"] {
 
 div[data-testid="column"] > div {
     padding-top: 0 !important;
+}
+
+div[data-testid="stVerticalBlock"] > div {
+    gap: 0 !important;
 }
 
 /* =========================
@@ -132,30 +121,10 @@ div[data-testid="column"] > div {
 div[data-testid="stVerticalBlock"]:has(.card-header) {
     background: var(--bg-card);
     border-radius: 16px;
-    padding: 24px 28px 16px 28px;
+    padding: 20px 24px;
     box-shadow: var(--shadow-card);
-    margin: 12px 0 24px 0;
+    margin-bottom: 24px;
     border: 1px solid #e8ecf1;
-}
-
-/* Excluir KPIs superiores */
-div[data-testid="stVerticalBlock"]:has(.kpi-card) {
-    background: transparent !important;
-    border-radius: 0 !important;
-    padding: 0 !important;
-    box-shadow: none !important;
-    margin: 0 !important;
-    border: none !important;
-}
-
-/* Excluir contenedor principal (header app) */
-div[data-testid="stVerticalBlock"]:has(.limtek-header) {
-    background: transparent !important;
-    border-radius: 0 !important;
-    padding: 0 !important;
-    box-shadow: none !important;
-    margin: 0 !important;
-    border: none !important;
 }
 
 /* Header azul */
@@ -230,7 +199,6 @@ div[data-testid="stPlotlyChart"] {
     padding: 0 !important;
     margin: 0 !important;
 }
-
 /* =========================
    TABLA SCROLL – RESPUESTAS ABIERTAS
 ========================= */
@@ -244,12 +212,11 @@ div[data-testid="stPlotlyChart"] {
     margin-top: 12px;
     margin-bottom: 8px;
 }
-
 /* =========================
    TÍTULOS DE SECCIÓN
 ========================= */
 h2 {
-    color: #ffffff !important;
+    color: #0b1b6f !important;
     font-size: 22px !important;
     font-weight: 700 !important;
     padding: 12px 0 8px 0 !important;
@@ -268,6 +235,7 @@ section[data-testid="stSidebar"] * {
     color: #ffffff !important;
 }
 
+/* Radio buttons en sidebar */
 section[data-testid="stSidebar"] [role="radiogroup"] label {
     background: rgba(255, 255, 255, 0.08) !important;
     border: 1px solid rgba(255, 255, 255, 0.15) !important;
@@ -287,6 +255,7 @@ section[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) {
     border-color: #f5c542 !important;
 }
 
+/* Selectboxes en sidebar */
 section[data-testid="stSidebar"] .stSelectbox > div > div {
     background: rgba(255, 255, 255, 0.1) !important;
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -299,11 +268,11 @@ section[data-testid="stSidebar"] .stSelectbox label {
     font-size: 13px !important;
 }
 
+/* Título del radio group */
 section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {
     font-size: 14px !important;
     font-weight: 600 !important;
 }
-
 /* =========================
    FOOTER VISIBLE
 ========================= */
@@ -313,4 +282,16 @@ section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {
 
 hr {
     border-color: rgba(59, 120, 194, 0.2) !important;
+}
+/* =========================
+   FIX STREAMLIT CLOUD
+========================= */
+[data-testid="stAppViewContainer"] {
+    background: #0f1b2d !important;
+}
+
+.block-container {
+    padding-top: 1rem !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
 }
