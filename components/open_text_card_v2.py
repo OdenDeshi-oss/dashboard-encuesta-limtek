@@ -1,22 +1,13 @@
 import pandas as pd
 import streamlit as st
 import plotly.express as px
-import re
-from collections import Counter
+from core.text_classifier import classify_open_ended
 
 
-STOPWORDS = {
-    "de", "la", "el", "en", "y", "a", "que", "los", "las", "un", "una",
-    "es", "por", "su", "del", "se", "con", "no", "lo", "al", "le", "da",
-    "nos", "mi", "muy", "más", "para", "como", "sus", "hay", "sin", "son",
-    "fue", "ser", "les", "ya", "o", "e", "todo", "esta", "pero", "ha",
-    "me", "si", "te", "ni", "otro", "otros", "san", "tan", "cada",
-}
-
-
-def render_pregunta_abierta(df, titulo, col_valor, top_n=10):
+def render_pregunta_abierta_v2(df, titulo, col_valor, categorias):
     """
-    Tarjeta con top palabras clave + tabla con scroll para preguntas abiertas.
+    Tarjeta de respuestas abiertas con categorización temática.
+    Muestra: gráfico de barras por categoría + ejemplos + detalle filtrable.
     """
 
     if col_valor not in df.columns:
@@ -31,24 +22,24 @@ def render_pregunta_abierta(df, titulo, col_valor, top_n=10):
 
     total = len(serie)
 
-    # ── Análisis de palabras clave ──
-    all_words = []
-    for text in serie.str.lower():
-        words = re.findall(r"[a-záéíóúñ]+", text)
-        all_words.extend([w for w in words if w not in STOPWORDS and len(w) > 2])
+    # Clasificar
+    df_clasificado = classify_open_ended(serie, categorias)
 
-    top_words = Counter(all_words).most_common(top_n)
+    # Conteo por categoría
+    conteo = df_clasificado["Categoria"].value_counts()
 
-    df_words = pd.DataFrame(top_words, columns=["Palabra", "Frecuencia"])
-    df_words["Porcentaje"] = (df_words["Frecuencia"] / total * 100).round(1)
-    df_words["LABEL"] = df_words.apply(
-        lambda r: f"{r['Frecuencia']}  ({r['Porcentaje']}%)", axis=1
+    df_plot = pd.DataFrame({
+        "Categoría": conteo.index,
+        "Cantidad": conteo.values,
+    })
+    df_plot["Porcentaje"] = (df_plot["Cantidad"] / total * 100).round(1)
+    df_plot["LABEL"] = df_plot.apply(
+        lambda r: f"{int(r['Cantidad'])}  ({r['Porcentaje']}%)", axis=1
     )
 
-    # Palabra top
-    top_palabra = df_words.iloc[0]["Palabra"].capitalize()
-    top_freq = int(df_words.iloc[0]["Frecuencia"])
-    top_pct = df_words.iloc[0]["Porcentaje"]
+    top_cat = df_plot.iloc[0]["Categoría"]
+    top_pct = df_plot.iloc[0]["Porcentaje"]
+    top_cant = int(df_plot.iloc[0]["Cantidad"])
 
     with st.container():
 
@@ -63,13 +54,12 @@ def render_pregunta_abierta(df, titulo, col_valor, top_n=10):
 
         col_kpi, col_chart = st.columns([1, 3], gap="medium")
 
-        # ── KPI ──
         with col_kpi:
             st.markdown(
                 f"""
                 <div class="likert-kpi">
                     <div class="likert-kpi-value">{total}</div>
-                    <div class="likert-kpi-label">Respuestas recibidas</div>
+                    <div class="likert-kpi-label">Respuestas analizadas</div>
                     <div class="likert-kpi-sub">100%</div>
                 </div>
                 """,
@@ -78,20 +68,18 @@ def render_pregunta_abierta(df, titulo, col_valor, top_n=10):
             st.markdown(
                 f"""
                 <div class="multi-top-badge">
-                    💬 Palabra más frecuente<br>
-                    <b style="font-size:18px;">{top_palabra}</b><br>
-                    <span>Mencionada {top_freq} veces ({top_pct}%)</span>
+                    🏆 <b>{top_cat}</b><br>
+                    <span>{top_cant} respuestas ({top_pct}%)</span>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
 
-        # ── Gráfico top palabras ──
         with col_chart:
             fig = px.bar(
-                df_words,
-                x="Frecuencia",
-                y="Palabra",
+                df_plot,
+                x="Cantidad",
+                y="Categoría",
                 text="LABEL",
                 orientation="h",
             )
@@ -104,7 +92,7 @@ def render_pregunta_abierta(df, titulo, col_valor, top_n=10):
             )
 
             fig.update_layout(
-                height=max(280, top_n * 36),
+                height=max(250, len(df_plot) * 50),
                 showlegend=False,
                 margin=dict(l=10, r=80, t=20, b=10),
                 plot_bgcolor="rgba(0,0,0,0)",
@@ -112,7 +100,7 @@ def render_pregunta_abierta(df, titulo, col_valor, top_n=10):
                 xaxis=dict(showgrid=False, showticklabels=False, title=""),
                 yaxis=dict(
                     title="",
-                    tickfont=dict(size=13, color="#333333", weight="bold"),
+                    tickfont=dict(size=12, color="#333333", weight="bold"),
                     autorange="reversed",
                     automargin=True,
                 ),
@@ -126,20 +114,44 @@ def render_pregunta_abierta(df, titulo, col_valor, top_n=10):
                 config={"displayModeBar": False, "staticPlot": True},
             )
 
-        # ── Tabla con scroll ──
+        # ── Ejemplos por categoría (top 3) ──
+        st.markdown(
+            '<div class="scroll-table-header">📋 Ejemplos por categoría</div>',
+            unsafe_allow_html=True,
+        )
+
+        # Selector de categoría
+        cats_disponibles = df_plot["Categoría"].tolist()
+        cat_sel = st.selectbox(
+            "Filtrar por categoría",
+            options=["Todas"] + cats_disponibles,
+            key=f"cat_{col_valor}",
+        )
+
+        if cat_sel == "Todas":
+            df_mostrar = df_clasificado
+        else:
+            df_mostrar = df_clasificado[df_clasificado["Categoria"] == cat_sel]
+
+        # Tabla HTML (evita pyarrow)
+        filas = df_mostrar.head(200)
         filas_html = ""
-        for i, texto in enumerate(serie.values[:200], 1):
-            filas_html += f"<tr><td style='padding:6px 10px;color:#888;width:40px;'>{i}</td><td style='padding:6px 10px;color:#333;'>{texto}</td></tr>"
+        for i, row in enumerate(filas.itertuples(), 1):
+            filas_html += (
+                f"<tr>"
+                f"<td style='padding:6px 10px;color:#888;width:40px;'>{i}</td>"
+                f"<td style='padding:6px 10px;color:#0b1b6f;font-weight:600;width:160px;'>{row.Categoria}</td>"
+                f"<td style='padding:6px 10px;color:#333;'>{row.Respuesta}</td>"
+                f"</tr>"
+            )
 
         st.markdown(
             f"""
-            <div class="scroll-table-header">
-                📋 Todas las respuestas ({total})
-            </div>
             <div style="max-height:300px;overflow-y:auto;background:#fff;border-radius:8px;border:1px solid #e8ecf1;">
                 <table style="width:100%;border-collapse:collapse;font-size:13px;">
                     <thead><tr style="background:#f0f4fa;position:sticky;top:0;">
                         <th style="padding:8px 10px;text-align:left;color:#0b1b6f;">#</th>
+                        <th style="padding:8px 10px;text-align:left;color:#0b1b6f;">Categoría</th>
                         <th style="padding:8px 10px;text-align:left;color:#0b1b6f;">Respuesta</th>
                     </tr></thead>
                     <tbody>{filas_html}</tbody>

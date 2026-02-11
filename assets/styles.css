@@ -295,3 +295,69 @@ hr {
     padding-left: 2rem !important;
     padding-right: 2rem !important;
 }
+/* =========================
+   BADGES CUMPLE / NO CUMPLE
+========================= */
+.cumple-badges {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.badge-positivo {
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.badge-negativo {
+    background: #fce4ec;
+    color: #c62828;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+}
+
+/* =========================
+   METODOLOGÍA
+========================= */
+.metodologia-box {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+}
+
+.metodologia-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    color: #333;
+}
+
+.metodologia-tabla tr {
+    border-bottom: 1px solid #e8ecf1;
+}
+
+.metodologia-tabla tr:last-child {
+    border-bottom: none;
+}
+
+.metodologia-tabla td {
+    padding: 10px 12px;
+    vertical-align: top;
+}
+
+.met-label {
+    font-weight: 700;
+    color: #0b1b6f;
+    width: 160px;
+    white-space: nowrap;
+}

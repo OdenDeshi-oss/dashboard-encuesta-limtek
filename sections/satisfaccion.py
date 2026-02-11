@@ -1,18 +1,18 @@
 import streamlit as st
-from core.constants import PREGUNTAS_LIKERT
-from components.likert_card import render_pregunta
+from core.config import PREGUNTAS_LIKERT_OPERARIOS, ESCALA_ACUERDO
+from components.likert_card_v2 import render_pregunta_v2
 
 
 def render_satisfaccion(df):
     """
-    Renderiza la sección de satisfacción.
-    Cada pregunta Likert se muestra como un card independiente.
-    El diseño se controla únicamente desde styles.css
+    Renderiza la sección de satisfacción (operarios).
+    Cada pregunta Likert se muestra con escala 1–5, sin neutral en gráfico.
     """
 
-    for p in PREGUNTAS_LIKERT:
-        render_pregunta(
+    for p in PREGUNTAS_LIKERT_OPERARIOS:
+        render_pregunta_v2(
             df=df,
             titulo=p["titulo"],
-            col_valor=p["col"]
+            col_valor=p["col"],
+            escala=ESCALA_ACUERDO,
         )

@@ -1,6 +1,7 @@
 import pandas as pd
 import streamlit as st
 import os
+from core.config import MAPA_ACUERDO_LEGACY, MAPA_FRECUENCIA_LEGACY
 
 # ======================
 # RUTAS DE ARCHIVOS
@@ -8,32 +9,12 @@ import os
 ENCUESTA_PATH = "data/ENCUESTA OPERARIOS_ CIERRE 2026.xlsx"
 INVENTARIO_PATH = "data/11. INVENTARIO NOVIEMBRE 2025 - ACTUALIZADO (1).xlsx"
 ADMIN_PATH = "data/Encuesta Personal administrativo 2025.xlsx"
+ADMIN_INVENTARIO_PATH = "data/Lista Encuesta clima laboral Adm 2025.xlsx"
 
 
-# ======================
-# UTILIDADES
-# ======================
 def normalizar_columnas(df):
     df.columns = df.columns.str.strip().str.upper()
     return df
-
-
-# ======================
-# MAPEOS DE ESCALA → VALOR NUMÉRICO
-# ======================
-MAPA_ACUERDO = {
-    "Totalmente de acuerdo": 4,
-    "Parcialmente de acuerdo": 3,
-    "Parcialmente en desacuerdo": 2,
-    "Totalmente en desacuerdo": 1,
-}
-
-MAPA_FRECUENCIA = {
-    "Siempre": 4,
-    "Casi siempre": 3,
-    "Casi nunca": 2,
-    "Nunca": 1,
-}
 
 
 # ======================
@@ -46,6 +27,17 @@ def cargar_encuesta():
 
     df = pd.read_excel(ENCUESTA_PATH, engine="openpyxl")
     df = normalizar_columnas(df)
+
+    # Re-mapear valores numéricos legacy (1-4) a escala 1-5
+    valor_cols = [c for c in df.columns if c.startswith("VALOR_")]
+    for col in valor_cols:
+        serie = pd.to_numeric(df[col], errors="coerce")
+        # Si max es 4, es escala legacy → remapear
+        if serie.max() <= 4:
+            # 1→1, 2→2, 3→4, 4→5 (no hay 3 neutral en datos legacy)
+            mapa = {1: 1, 2: 2, 3: 4, 4: 5}
+            df[col] = serie.map(mapa)
+
     return df
 
 
@@ -81,7 +73,7 @@ def cargar_encuesta_admin():
 
     df = pd.read_excel(ADMIN_PATH, engine="openpyxl")
 
-    # Columnas Likert escala ACUERDO (índices 4,5,10,11,12,13,14,15,16,17,18)
+    # Columnas Likert escala ACUERDO
     cols_acuerdo = [
         "Me siento a gusto con el ambiente de trabajo que se genera en mi equipo.",
         "En mi entorno de trabajo mantenemos una actitud positiva centrándonos en las soluciones más que en los problemas.",
@@ -97,7 +89,7 @@ def cargar_encuesta_admin():
         "Considero a Limtek como un buen lugar para trabajar",
     ]
 
-    # Columnas Likert escala FRECUENCIA (índices 6,7,8,9)
+    # Columnas Likert escala FRECUENCIA
     cols_frecuencia = [
         "Busco innovar y nuevas formas de hacer mejor mi trabajo.",
         "Dialogo con mi jefe directo sobre la calidad de mi trabajo y cómo podría mejorar.",
@@ -105,16 +97,27 @@ def cargar_encuesta_admin():
         "Mis compañeros de área me dan soporte cuando lo necesito.",
     ]
 
-    # Crear columnas de valor numérico
     for col in cols_acuerdo:
         if col in df.columns:
             valor_col = f"VALOR_{col[:30].strip()}"
-            df[valor_col] = df[col].map(MAPA_ACUERDO)
+            df[valor_col] = df[col].map(MAPA_ACUERDO_LEGACY)
 
     for col in cols_frecuencia:
         if col in df.columns:
             valor_col = f"VALOR_{col[:30].strip()}"
-            df[valor_col] = df[col].map(MAPA_FRECUENCIA)
+            df[valor_col] = df[col].map(MAPA_FRECUENCIA_LEGACY)
 
     df = normalizar_columnas(df)
     return df
+
+
+# ======================
+# CARGA INVENTARIO ADMINISTRATIVOS
+# ======================
+def cargar_inventario_admin():
+    if not os.path.exists(ADMIN_INVENTARIO_PATH):
+        return 0
+
+    df_inv = pd.read_excel(ADMIN_INVENTARIO_PATH, engine="openpyxl")
+    df_inv = normalizar_columnas(df_inv)
+    return len(df_inv)
